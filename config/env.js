@@ -22,7 +22,15 @@ const envSchema = z.object({
 
   MONGODB_URI: z.string().min(1),
 
-  CLIENT_URL: z.string().url().default("http://localhost:5173"),
+  CLIENT_URL: z
+    .string()
+    .default("http://localhost:5173")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    ),
 
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
 

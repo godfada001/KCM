@@ -31,10 +31,42 @@ app.use(cookieParser());
 // Security headers
 app.use(helmet());
 
+const allowedOrigins = Array.isArray(env.CLIENT_URL)
+  ? env.CLIENT_URL
+  : [env.CLIENT_URL];
+
 // Configure permitted frontend origins
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      try {
+        const requestOrigin = new URL(origin);
+        const isAllowed = allowedOrigins.some((allowedOrigin) => {
+          try {
+            const parsedAllowed = new URL(allowedOrigin);
+            return requestOrigin.origin === parsedAllowed.origin;
+          } catch {
+            return false;
+          }
+        });
+
+        if (isAllowed) {
+          callback(null, true);
+          return;
+        }
+      } catch {
+        callback(new Error("Not allowed by CORS"));
+        return;
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
